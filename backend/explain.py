@@ -2,9 +2,11 @@
 import os
 import json
 import random
+from dotenv import load_dotenv
 from typing import Optional
 from google import genai
 from google.genai import types
+load_dotenv()
 
 # ─── Configuration ──────────────────────────────────────────────────────────
 API_KEY = os.getenv("API_KEY")

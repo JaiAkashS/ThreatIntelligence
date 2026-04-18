@@ -21,8 +21,10 @@ const TopThreatsChart = ({ cves = [] }) => {
     }));
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-800/80 bg-[#0f172a]/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.4)] backdrop-blur-xl">
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-red-500/30 to-transparent"></div>
+    // 1. Added explicit overflow-visible and z-50 to the main wrapper
+    <div className="relative z-50 overflow-visible rounded-2xl border border-slate-800/80 bg-[#0f172a]/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.4)] backdrop-blur-xl">
+      
+      <div className="absolute inset-x-0 top-0 h-1 rounded-t-2xl bg-gradient-to-r from-transparent via-red-500/30 to-transparent"></div>
 
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
@@ -41,8 +43,9 @@ const TopThreatsChart = ({ cves = [] }) => {
       </div>
 
       <div className="h-[320px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ top: 8, right: 24, left: 12, bottom: 0 }}>
+        <ResponsiveContainer width="100%" height="100%" className="overflow-visible">
+          {/* 2. Increased right margin to 120 to act as a buffer zone for the tooltip */}
+          <BarChart data={data} layout="vertical" margin={{ top: 8, right: 120, left: 12, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={true} vertical={false} />
             <XAxis
               type="number"
@@ -59,8 +62,12 @@ const TopThreatsChart = ({ cves = [] }) => {
               axisLine={false}
               tickLine={false}
             />
+            
+            {/* 3. Forced ultra-high z-index on the tooltip wrapper */}
             <Tooltip
               cursor={{ fill: 'rgba(15, 23, 42, 0.55)' }}
+              allowEscapeViewBox={{ x: true, y: true }}
+              wrapperStyle={{ zIndex: 9999, outline: 'none' }}
               content={(
                 <InsightTooltip
                   title="Threat Details"
@@ -75,6 +82,7 @@ const TopThreatsChart = ({ cves = [] }) => {
                 />
               )}
             />
+            
             <Bar dataKey="riskScore" radius={[0, 10, 10, 0]} barSize={24}>
               {data.map((entry) => (
                 <Cell key={entry.id} fill={entry.fill} />
