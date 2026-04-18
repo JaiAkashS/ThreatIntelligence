@@ -4,7 +4,6 @@ import StatsCards from "./components/StatsCards";
 import RiskChart from "./components/RiskChart";
 import TopThreatsChart from "./components/TopThreatsChart";
 import FactorInsightsChart from "./components/FactorInsightsChart";
-import CVEActivityHeatmap from "./components/CVEActivityHeatmap";
 import CVETable from "./components/CVETable";
 
 const App = () => {
@@ -245,7 +244,7 @@ const App = () => {
           <FactorInsightsChart data={factorInsightsData} />
         </div>
 
-        <CVEActivityHeatmap cves={filteredCVEs} />
+        
 
         <CVETable cves={filteredCVEs} />
       </div>
