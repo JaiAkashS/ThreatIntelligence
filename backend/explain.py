@@ -94,15 +94,22 @@ class GeminiExplainer:
         
         prompt = f"""
         Role: Senior Security Analyst
-        Analyze this specific CVE and provide unique, highly tailored remediation steps. Do not use generic answers.
+        Analyze this specific CVE and provide unique, highly tailored remediation steps. 
+        CRITICAL INSTRUCTION: Be extremely concise. Analysts are reading this on a fast-paced dashboard. 
+        Do not use generic answers.
+        
         CVE Data: {json.dumps(scored_cve)}
         
         Task: Provide a professional JSON summary.
         Format strictly as raw JSON: 
         {{
-            "summary": "2 sentences specific to this exact CVE",
-            "threat_context": "Specific attack scenario for this vulnerability",
-            "recommended_actions": ["Specific step 1", "Specific step 2", "Specific step 3"]
+            "summary": "1 short, punchy sentence summarizing the specific risk.",
+            "threat_context": "1 short sentence explaining the attack vector.",
+            "recommended_actions": [
+                "Specific step 1 (maximum 12 words)", 
+                "Specific step 2 (maximum 12 words)", 
+                "Specific step 3 (maximum 12 words)"
+            ]
         }}
         """
         try:
