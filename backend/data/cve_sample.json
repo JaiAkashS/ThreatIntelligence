@@ -58,5 +58,65 @@
     "cvss": 8.7,
     "desc": "Insecure deserialization vulnerability",
     "exploit": true
+  },
+  {
+    "id": "CVE-011",
+    "cvss": 9.9,
+    "desc": "Unauthenticated command injection in global VPN concentrator",
+    "exploit": true
+  },
+  {
+    "id": "CVE-012",
+    "cvss": 3.1,
+    "desc": "Local path traversal in non-privileged log viewer",
+    "exploit": false
+  },
+  {
+    "id": "CVE-013",
+    "cvss": 8.8,
+    "desc": "Hardcoded administrative credentials in firmware v2.0",
+    "exploit": true
+  },
+  {
+    "id": "CVE-014",
+    "cvss": 5.9,
+    "desc": "Null pointer dereference causing intermittent service crash",
+    "exploit": false
+  },
+  {
+    "id": "CVE-015",
+    "cvss": 7.2,
+    "desc": "Insecure direct object reference (IDOR) in billing API",
+    "exploit": true
+  },
+  {
+    "id": "CVE-016",
+    "cvss": 9.0,
+    "desc": "Side-channel attack on cryptographic module leading to key leak",
+    "exploit": false
+  },
+  {
+    "id": "CVE-017",
+    "cvss": 6.5,
+    "desc": "Server-side request forgery (SSRF) via PDF generator",
+    "exploit": true
+  },
+  {
+    "id": "CVE-018",
+    "cvss": 4.7,
+    "desc": "Weak password hashing algorithm (MD5) in legacy DB",
+    "exploit": false
+  },
+  {
+    "id": "CVE-019",
+    "cvss": 8.1,
+    "desc": "Directory listing enabled on sensitive backup directory",
+    "exploit": true
+  },
+  {
+    "id": "CVE-020",
+    "cvss": 5.5,
+    "desc": "Clickjacking vulnerability in user settings page",
+    "exploit": false
   }
 ]

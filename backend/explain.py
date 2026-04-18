@@ -292,13 +292,20 @@ def generate_explanation(scored_cve: dict) -> dict:
         if age_penalty < 0.99 else ""
     )
 
+    # Detect if the Severity Floor from model.py kicked in
+    total_contribution = sum(b.get("contribution", 0) for b in breakdown.values())
+    floor_note = ""
+    # If the final score is significantly higher than the raw math, a floor was applied
+    if risk_score > (total_contribution * age_penalty + 5):
+        floor_note = " *Note: The final score was automatically elevated by the engine's severity floor to ensure a critical base CVSS is not downplayed by missing threat data.*"
+
     summary = (
         f"{cve_id} has been assigned a **{priority} priority** risk score of "
         f"**{risk_score}/100** based on a multi-factor contextual analysis. "
         f"This vulnerability carries {_cvss_phrase(float(cvss_raw), idx)}, "
         f"affecting {affected_str}. "
         f"Given the current exploit landscape and asset exposure, "
-        f"this CVE demands {'immediate attention' if priority in ('CRITICAL', 'HIGH') else 'scheduled remediation'}.{age_note}"
+        f"this CVE demands {'immediate attention' if priority in ('CRITICAL', 'HIGH') else 'scheduled remediation'}.{age_note}{floor_note}"
     )
 
     # ── Layer 2: Per-Factor Analysis ──────────────────────────────────────────

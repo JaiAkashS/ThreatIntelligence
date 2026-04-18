@@ -82,12 +82,21 @@ def normalize_cvss(cvss_score: float) -> float:
     return max(0.0, min(cvss_score, 10.0)) / 10.0
 
 
+def calculate_severity_from_cvss(cvss: float) -> str:
+    """Derive severity label from a CVSS score."""
+    if cvss >= 9.0: return "CRITICAL"
+    elif cvss >= 7.0: return "HIGH"
+    elif cvss >= 4.0: return "MEDIUM"
+    else: return "LOW"
+
+
 def resolve_cvss(cve: dict) -> float:
     """
     Extract CVSS score from CVE dict.
-    Falls back to severity string → mapped score if cvss_score is missing.
+    Checks for both 'cvss' and 'cvss_score' to support different JSON formats.
     """
-    raw = cve.get("cvss_score")
+    # ── FIXED: Added support for 'cvss' key ──
+    raw = cve.get("cvss") if "cvss" in cve else cve.get("cvss_score")
     if raw is not None:
         try:
             return float(raw)
@@ -112,8 +121,6 @@ def resolve_factor(cve: dict, field: str, score_map: dict, default_key: str) -> 
 def compute_age_penalty(cve: dict) -> float:
     """
     Returns a small multiplicative penalty (0.85–1.0) for very old CVEs.
-    The idea: a 2-year-old unpatched CVE is still serious, but slightly
-    less "urgent" from a triage perspective than a freshly disclosed one.
     Only applies if published_date is available.
     """
     published = cve.get("published_date")
@@ -172,36 +179,39 @@ def score_cve(cve: dict) -> dict:
     """
     Main entry point. Accepts a raw CVE dict and returns an enriched copy
     with risk_score (0–100), priority label, factor breakdown, and metadata.
-
-    Input CVE dict fields (all optional except 'id'):
-      id              : str  — CVE identifier e.g. "CVE-2024-1234"
-      description     : str  — Vulnerability description
-      cvss_score      : float — CVSS v3 base score (0–10)
-      severity        : str  — LOW | MEDIUM | HIGH | CRITICAL
-      exploit_maturity: str  — weaponized | poc | theoretical | unproven | none
-      asset_criticality: str — mission_critical | high | medium | low | unknown
-      threat_intel    : str  — apt_linked | ransomware | active_campaign | trending | mentioned | none
-      patch_status    : str  — no_patch | vendor_advisory | patch_available | patched
-      published_date  : str  — ISO 8601 date string e.g. "2024-03-15"
-      affected_systems: list — list of affected product/system strings
-      references      : list — list of reference URLs
     """
+    
+    # ── FIXED: Pre-process dict to handle JSON mismatches safely ──
+    cve_clean = cve.copy()
+    
+    # Normalize description field
+    if "description" not in cve_clean and "desc" in cve_clean:
+        cve_clean["description"] = cve_clean["desc"]
+        
+    # Normalize exploit field (boolean -> string maturity label)
+    if "exploit_maturity" not in cve_clean and "exploit" in cve_clean:
+        cve_clean["exploit_maturity"] = "poc" if cve_clean["exploit"] else "unproven"
+
+    # Ensure severity exists (Calculated dynamically if UNKNOWN or missing)
+    cvss_raw = resolve_cvss(cve_clean)
+    if cve_clean.get("severity", "UNKNOWN").upper() == "UNKNOWN":
+        cve_clean["severity"] = calculate_severity_from_cvss(cvss_raw)
+    # ──────────────────────────────────────────────────────────────
 
     # ── Step 1: Resolve raw factor scores (all 0.0–1.0) ──────────────────────
-    cvss_raw    = resolve_cvss(cve)
     cvss_norm   = normalize_cvss(cvss_raw)
 
     exploit_score = resolve_factor(
-        cve, "exploit_maturity", EXPLOIT_MATURITY_SCORES, "unproven"
+        cve_clean, "exploit_maturity", EXPLOIT_MATURITY_SCORES, "unproven"
     )
     asset_score = resolve_factor(
-        cve, "asset_criticality", ASSET_CRITICALITY_SCORES, "unknown"
+        cve_clean, "asset_criticality", ASSET_CRITICALITY_SCORES, "unknown"
     )
     threat_score = resolve_factor(
-        cve, "threat_intel", THREAT_INTEL_SCORES, "none"
+        cve_clean, "threat_intel", THREAT_INTEL_SCORES, "none"
     )
     patch_score = resolve_factor(
-        cve, "patch_status", PATCH_STATUS_SCORES, "patch_available"
+        cve_clean, "patch_status", PATCH_STATUS_SCORES, "patch_available"
     )
 
     # ── Step 2: Weighted sum ──────────────────────────────────────────────────
@@ -214,11 +224,17 @@ def score_cve(cve: dict) -> dict:
     )
 
     # ── Step 3: Apply age decay ───────────────────────────────────────────────
-    age_penalty   = compute_age_penalty(cve)
+    age_penalty   = compute_age_penalty(cve_clean)
     adjusted_score = weighted_score * age_penalty
 
-    # ── Step 4: Scale to 0–100 and round ─────────────────────────────────────
+    # ── Step 4: Scale to 0–100 and apply Severity Floors ─────────────────────
     final_score = round(min(adjusted_score * 100, 100.0), 2)
+
+    # SEVERITY FLOORS: Ensure severe CVSS scores aren't averaged down to Low
+    if cvss_raw >= 9.0 and final_score < 70:
+        final_score = 75.0  # Force CVSS 9.0+ to stay at least HIGH
+    elif cvss_raw >= 7.0 and final_score < 40:
+        final_score = 45.0  # Force CVSS 7.0+ to stay at least MEDIUM
 
     # ── Step 5: Derive labels and metadata ───────────────────────────────────
     priority           = classify_priority(final_score)
@@ -234,25 +250,25 @@ def score_cve(cve: dict) -> dict:
             "contribution": round(cvss_norm * WEIGHTS["cvss"] * 100, 2),
         },
         "exploit_maturity": {
-            "raw_value":    cve.get("exploit_maturity", "unproven"),
+            "raw_value":    cve_clean.get("exploit_maturity", "unproven"),
             "normalized":   exploit_score,
             "weight":       WEIGHTS["exploit"],
             "contribution": round(exploit_score * WEIGHTS["exploit"] * 100, 2),
         },
         "asset_criticality": {
-            "raw_value":    cve.get("asset_criticality", "unknown"),
+            "raw_value":    cve_clean.get("asset_criticality", "unknown"),
             "normalized":   asset_score,
             "weight":       WEIGHTS["asset"],
             "contribution": round(asset_score * WEIGHTS["asset"] * 100, 2),
         },
         "threat_intel": {
-            "raw_value":    cve.get("threat_intel", "none"),
+            "raw_value":    cve_clean.get("threat_intel", "none"),
             "normalized":   threat_score,
             "weight":       WEIGHTS["threat_intel"],
             "contribution": round(threat_score * WEIGHTS["threat_intel"] * 100, 2),
         },
         "patch_status": {
-            "raw_value":    cve.get("patch_status", "patch_available"),
+            "raw_value":    cve_clean.get("patch_status", "patch_available"),
             "normalized":   patch_score,
             "weight":       WEIGHTS["patch"],
             "contribution": round(patch_score * WEIGHTS["patch"] * 100, 2),
@@ -261,8 +277,8 @@ def score_cve(cve: dict) -> dict:
 
     # ── Step 7: Return enriched CVE dict ─────────────────────────────────────
     return {
-        # Original fields preserved
-        **cve,
+        # Original fields preserved (including your 'desc' and boolean 'exploit' for the UI)
+        **cve_clean,
 
         # Computed fields
         "risk_score":           final_score,
@@ -270,7 +286,7 @@ def score_cve(cve: dict) -> dict:
         "priority_color":       color,
         "remediation_urgency":  remediation_urgency,
         "age_penalty_applied":  round(age_penalty, 4),
-        "severity":             cve.get("severity", "UNKNOWN").upper(),
+        "severity":             cve_clean.get("severity", "UNKNOWN").upper(),
 
         # Factor breakdown (powers the explanation + dashboard charts)
         "factor_breakdown":     factor_breakdown,

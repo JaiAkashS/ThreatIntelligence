@@ -34,7 +34,7 @@ nltk==3.8.1                        # Tokenization & text preprocessing
 
 # ─── CVE / Security Data Sources ─────────────────────────────────────────────
 nvdlib==0.7.6                      # NVD (National Vulnerability Database) API wrapper
-cvedb==0.1.0                       # Lightweight CVE database access
+cvedb==0.0.5                      # Lightweight CVE database access
 
 # ─── Caching ──────────────────────────────────────────────────────────────────
 cachetools==5.3.3                  # In-memory TTL cache for CVE feed responses

@@ -1,6 +1,6 @@
 # backend/main.py
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 import json
@@ -28,8 +28,13 @@ app.add_middleware(
 DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "cve_sample.json")
 
 def load_cves() -> list[dict]:
-    with open(DATA_PATH, "r") as f:
-        return json.load(f)
+    # Added a try/except block to handle missing file gracefully during dev
+    try:
+        with open(DATA_PATH, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Warning: Data file not found at {DATA_PATH}. Returning empty list.")
+        return []
 
 CVE_DB: list[dict] = load_cves()
 
@@ -85,7 +90,8 @@ def get_cve_by_id(cve_id: str):
             scored["explanation"] = generate_explanation(scored)
             return scored
 
-    return {"error": f"CVE '{cve_id}' not found"}, 404
+    # FIXED: Use FastAPI's HTTPException instead of returning a tuple
+    raise HTTPException(status_code=404, detail=f"CVE '{cve_id}' not found")
 
 
 @app.get("/summary", summary="Dashboard summary statistics")

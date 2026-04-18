@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Activity, Server, Database } from 'lucide-react';
+import { Search, Crosshair, Database, Fingerprint } from 'lucide-react';
 import StatsCards from './components/StatsCards';
 import RiskChart from './components/RiskChart';
 // import TopThreatsChart from './components/TopThreatsChart';
@@ -11,31 +11,21 @@ const App = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState(null);
 
-  // Fallback data matching your exact backend schema
   const mockData = [
     {
-      id: "CVE-2024-001",
-      risk_score: 9.5,
-      priority: "CRITICAL",
-      dominant_factor: "Active Public Exploit",
+      id: "CVE-2024-001", risk_score: 9.5, priority: "CRITICAL", dominant_factor: "Active Public Exploit",
       factor_breakdown: { exploitability: 9.8, impact: 9.1, base_score: 9.5 },
       recommended_actions: ["Isolate affected subnet", "Apply emergency patch"],
       explainations: { summary: "Highly targeted vulnerability with weaponized exploits in the wild." }
     },
     {
-      id: "CVE-2024-002",
-      risk_score: 7.8,
-      priority: "HIGH",
-      dominant_factor: "Network Vector",
+      id: "CVE-2024-002", risk_score: 7.8, priority: "HIGH", dominant_factor: "Network Vector",
       factor_breakdown: { exploitability: 7.2, impact: 8.4 },
       recommended_actions: ["Update firewall rules", "Monitor for anomalous traffic"],
       explainations: { summary: "Remote code execution possible, but requires specific configuration." }
     },
     {
-      id: "CVE-2024-003",
-      risk_score: 5.4,
-      priority: "MEDIUM",
-      dominant_factor: "Privilege Escalation",
+      id: "CVE-2024-003", risk_score: 5.4, priority: "MEDIUM", dominant_factor: "Privilege Escalation",
       factor_breakdown: { exploitability: 4.1, impact: 6.2 },
       recommended_actions: ["Audit user permissions", "Patch during next maintenance window"],
       explainations: { summary: "Local access required. Minimal risk to perimeter." }
@@ -46,23 +36,20 @@ const App = () => {
     const fetchCVEs = async () => {
       try {
         setLoading(true);
-        // Replace with your actual backend URL
         const response = await fetch('http://localhost:8000/cves');
         if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
-        setCves(data);
+        console.log("BACKEND DATA:", data[0]);
+        setCves(data.cves);
       } catch (error) {
-        console.error("Backend connection failed. Using fallback data.", error);
         setCves(mockData);
       } finally {
         setLoading(false);
       }
     };
-
     fetchCVEs();
   }, []);
 
-  // Compute stats using the new backend 'priority' field
   const stats = useMemo(() => {
     return cves.reduce((acc, cve) => {
       const p = (cve.priority || 'LOW').toUpperCase(); 
@@ -74,7 +61,6 @@ const App = () => {
     }, { critical: 0, high: 0, medium: 0, low: 0 });
   }, [cves]);
 
-  // Apply search filtering
   const filteredCVEs = useMemo(() => {
     return cves.filter(cve => {
       const searchStr = `${cve.id} ${cve.explainations?.summary} ${cve.dominant_factor}`.toLowerCase();
@@ -86,44 +72,62 @@ const App = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen bg-slate-50">
-        <Activity className="animate-pulse text-indigo-600 mb-4" size={48} />
-        <p className="text-slate-600 font-medium animate-pulse">Fetching Threat Data...</p>
+      <div className="flex flex-col justify-center items-center h-screen bg-[#030712]">
+        <div className="relative">
+          <Crosshair className="animate-[spin_3s_linear_infinite] text-cyan-500 mb-6" size={64} strokeWidth={1} />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <div className="w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div>
+          </div>
+        </div>
+        <p className="text-cyan-500/80 font-mono tracking-[0.3em] uppercase text-xs animate-pulse shadow-cyan-500 drop-shadow-md">Decrypting Threat Streams...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-12">
-      {/* Navigation */}
-      <nav className="bg-slate-900 text-white shadow-md">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-indigo-600 p-2 rounded-lg">
-              <Activity size={24} className="text-white" />
+    <div className="min-h-screen bg-[#020617] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(6,182,212,0.15),rgba(255,255,255,0))] text-slate-300 font-sans pb-16 selection:bg-cyan-900/50 selection:text-cyan-200">
+      
+      <nav className="bg-[#020617]/50 backdrop-blur-2xl border-b border-slate-800/80 sticky top-0 z-50 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+        <div className="max-w-[90rem] mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative group cursor-pointer">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-500"></div>
+              <div className="relative bg-[#020617] p-2.5 rounded-xl border border-slate-800">
+                <Fingerprint size={24} className="text-cyan-400" />
+              </div>
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-wide">NexusAI Security</h1>
-              <p className="text-slate-400 text-xs uppercase tracking-wider">Threat Prioritization Dashboard</p>
+              <h1 className="text-2xl font-black tracking-widest text-slate-200">
+                NEXUS<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">AI</span>
+              </h1>
+              <p className="text-slate-500 text-[9px] font-mono uppercase tracking-[0.3em] mt-0.5">Advanced Threat Heuristics</p>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-4 text-sm font-medium text-slate-300">
-            <span className="flex items-center gap-2"><Server size={16} /> API Connected</span>
-            <span className="flex items-center gap-2"><Database size={16} /> Model Active</span>
+          <div className="hidden md:flex items-center gap-8 text-[11px] font-mono tracking-widest text-slate-400">
+            <span className="flex items-center gap-2 bg-slate-900/50 px-3 py-1.5 rounded-full border border-slate-800">
+              <div className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </div>
+              NODE LINK SECURE
+            </span>
+            <span className="flex items-center gap-2 bg-slate-900/50 px-3 py-1.5 rounded-full border border-slate-800">
+              <Database size={12} className="text-purple-400" /> 
+              ML ENGINE ACTIVE
+            </span>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-6 mt-8 space-y-6">
+      <div className="max-w-[90rem] mx-auto px-6 mt-10 space-y-8">
         
-        {/* Search Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#0f172a]/40 backdrop-blur-md p-2 pl-4 rounded-2xl border border-slate-800/80 shadow-[0_0_40px_rgba(0,0,0,0.3)] hover:border-slate-700/80 transition-all duration-300">
+          <div className="relative w-full md:w-1/2 flex items-center">
+            <Search className="absolute left-3 text-cyan-500/50" size={20} />
             <input 
               type="text" 
-              placeholder="Search threat context or ID..." 
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+              placeholder="> Initiate manual query (CVE ID, Vector, Context)..." 
+              className="w-full pl-12 pr-4 py-3 bg-transparent border-none focus:outline-none focus:ring-0 text-slate-200 placeholder-slate-600 font-mono text-sm tracking-wide"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -131,27 +135,29 @@ const App = () => {
           {activeFilter && (
             <button 
               onClick={() => setActiveFilter(null)}
-              className="text-sm text-slate-500 hover:text-indigo-600 font-medium px-4 py-2 transition-colors"
+              className="text-[10px] font-mono text-slate-400 hover:text-red-400 px-6 py-3 transition-colors tracking-widest uppercase bg-slate-900/80 rounded-xl border border-slate-800 hover:border-red-900/50"
             >
-              Clear Filters
+              [ Terminate Override ]
             </button>
           )}
         </div>
 
-        {/* Top Row: Stats Cards */}
-        <div className="w-full">
-          <StatsCards stats={stats} activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+        {/* --- NEW LAYOUT: Cards and Pie Chart in one row --- */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          <div className="xl:col-span-8 w-full">
+            <StatsCards stats={stats} activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+          </div>
+          <div className="xl:col-span-4 w-full">
+            <RiskChart stats={stats} />
+          </div>
         </div>
 
-        {/* Middle Row: Dual Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RiskChart stats={stats} />
+        {/* --- Top Threats Chart now spans full width below the top row --- */}
+        <div className="w-full">
           {/* <TopThreatsChart cves={filteredCVEs} /> */}
         </div>
 
-        {/* Bottom Row: Data Table with Expandable Rows */}
         <CVETable cves={filteredCVEs} />
-
       </div>
     </div>
   );
