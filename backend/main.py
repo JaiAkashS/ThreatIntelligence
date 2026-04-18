@@ -5,9 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 import json
 import os
+from dotenv import load_dotenv
 
 from model import score_cve
 from explain import generate_explanation
+
+load_dotenv()  # Load environment variables from .env file
 
 app = FastAPI(
     title="AI Threat Intelligence & CVE Prioritization API",

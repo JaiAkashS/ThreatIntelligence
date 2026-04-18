@@ -7,7 +7,7 @@ from google import genai
 from google.genai import types
 
 # ─── Configuration ──────────────────────────────────────────────────────────
-API_KEY = "AIzaSyB8f99T6bRKTAtZlYFqskG2qKy_SwMvoIs"
+API_KEY = os.getenv("API_KEY")
 
 if API_KEY:
     # Initialize the new Client
