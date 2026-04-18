@@ -59,12 +59,7 @@
     "desc": "Insecure deserialization vulnerability",
     "exploit": true
   },
-  {
-    "id": "CVE-011",
-    "cvss": 9.9,
-    "desc": "Unauthenticated command injection in global VPN concentrator",
-    "exploit": true
-  },
+  
   {
     "id": "CVE-012",
     "cvss": 3.1,
@@ -89,12 +84,7 @@
     "desc": "Insecure direct object reference (IDOR) in billing API",
     "exploit": true
   },
-  {
-    "id": "CVE-016",
-    "cvss": 9.0,
-    "desc": "Side-channel attack on cryptographic module leading to key leak",
-    "exploit": false
-  },
+  
   {
     "id": "CVE-017",
     "cvss": 6.5,

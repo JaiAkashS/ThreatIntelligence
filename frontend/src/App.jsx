@@ -39,7 +39,7 @@ const App = () => {
         const response = await fetch('http://localhost:8000/cves');
         if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
-        console.log("BACKEND DATA:", data[0]);
+        console.log("BACKEND DATA:", data.cves);
         setCves(data.cves);
       } catch (error) {
         setCves(mockData);

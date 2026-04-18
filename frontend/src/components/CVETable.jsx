@@ -10,7 +10,7 @@ const CVETable = ({ cves }) => {
     const p = (priority || 'LOW').toUpperCase();
     if (p === 'CRITICAL') return { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/40', glow: 'shadow-[0_0_15px_rgba(239,68,68,0.3)]' };
     if (p === 'HIGH') return { color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/40', glow: 'shadow-[0_0_15px_rgba(249,115,22,0.3)]' };
-    if (p === 'MEDIUM') return { color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', glow: 'shadow-[0_0_15_px_rgba(234,179,8,0.3)]' };
+    if (p === 'MEDIUM') return { color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', glow: 'shadow-[0_0_15px_rgba(234,179,8,0.3)]' };
     return { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/40', glow: 'shadow-[0_0_15px_rgba(16,185,129,0.3)]' };
   };
 
@@ -23,7 +23,7 @@ const CVETable = ({ cves }) => {
           <Binary size={16} className="text-slate-500" />
           Threat Matrix Log
         </h3>
-        <span className="text-[10px] font-mono font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 px-4 py-1.5 rounded-full uppercase tracking-widest shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+        <span className="text-[10px] font-mono font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 px-4 py-1.5 rounded-full uppercase tracking-widest">
           {cves.length} Signatures Matched
         </span>
       </div>
@@ -56,9 +56,17 @@ const CVETable = ({ cves }) => {
                       <td className="p-5">
                         <div className="flex flex-col gap-2.5">
                           <span className="font-mono font-bold text-slate-200 text-sm tracking-wide">{cve.id}</span>
+                          
+                          {/* Description mapped from backend payload */}
+                          {cve.description && (
+                            <p className="text-[11px] text-slate-400 leading-relaxed italic max-w-sm line-clamp-2 group-hover:text-slate-300 transition-colors">
+                              {cve.description}
+                            </p>
+                          )}
+
                           {cve.dominant_factor && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-mono font-bold bg-[#020617] text-slate-400 border border-slate-700/80 tracking-widest uppercase w-fit group-hover:border-slate-600 transition-colors">
-                              <Zap size={10} className="text-amber-400" /> {cve.dominant_factor}
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-mono font-bold bg-[#020617] text-slate-400 border border-slate-700/80 tracking-widest uppercase w-fit group-hover:border-slate-600">
+                              <Zap size={10} className="text-amber-400" /> {cve.dominant_factor.replace(/_/g, ' ')}
                             </span>
                           )}
                         </div>
@@ -75,16 +83,16 @@ const CVETable = ({ cves }) => {
                       </td>
                       <td className="p-5">
                         <div className="flex flex-col gap-4">
-                          {/* AI Explanation Summary */}
+                          {/* AI Summary */}
                           <div className="flex items-start gap-3 bg-[#020617]/40 p-3 rounded-xl border border-slate-800/40">
                             <Cpu size={16} className="text-cyan-500 mt-0.5 shrink-0" />
                             <span className="text-sm text-slate-300 font-medium leading-relaxed">
-                              {cve.explanation?.summary || "Awaiting neural interpretation..."}
+                              {cve.explanation?.summary || "Analyzing vulnerability signature..."}
                             </span>
                           </div>
 
-                          {/* Recommended Actions List */}
-                          {cve.explanation?.recommended_actions && cve.explanation.recommended_actions.length > 0 && (
+                          {/* Recommended Actions */}
+                          {cve.explanation?.recommended_actions?.length > 0 && (
                             <div className="ml-7 pl-3 border-l-2 border-slate-700/50">
                               <ul className="space-y-2">
                                 {cve.explanation.recommended_actions.map((action, i) => (
@@ -100,38 +108,38 @@ const CVETable = ({ cves }) => {
                       </td>
                     </tr>
                     
-                    {/* Neural Breakdown Drawer */}
+                    {/* Telemetry Drawer */}
                     {isExpanded && cve.factor_breakdown && (
                       <tr className="bg-[#020617] border-b border-slate-800/80">
                         <td colSpan="4" className="p-0">
                           <div className="px-16 py-8">
                             <div className="bg-[#0f172a]/60 border border-slate-800/80 p-6 rounded-2xl relative overflow-hidden">
-                              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+                              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 blur-[100px] rounded-full"></div>
                               <h4 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                                <Crosshair size={14} className="text-slate-400" /> Granular Telemetry
+                                <Crosshair size={14} className="text-slate-400" /> Granular Factor Analysis
                               </h4>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
-                                {Object.entries(cve.factor_breakdown).map(([key, value]) => {
-                                  const displayValue = typeof value === 'object' ? value.raw_value : value;
-                                  const contribution = typeof value === 'object' ? value.contribution : null;
-
-                                  return (
-                                    <div key={key} className="bg-[#020617]/80 p-4 rounded-xl border border-slate-800/50 hover:border-slate-700/80 transition-colors">
-                                      <p className="text-[9px] text-slate-500 font-mono uppercase tracking-[0.2em] truncate mb-2">
-                                        {key.replace(/_/g, ' ')}
-                                      </p>
-                                      <p className="text-xl font-bold text-slate-200 font-mono">
-                                        {typeof displayValue === 'number' && displayValue % 1 !== 0 ? displayValue.toFixed(2) : displayValue}
-                                      </p>
-                                      {contribution !== null && (
-                                        <p className="text-[9px] text-cyan-500/70 font-mono mt-1">
-                                          +{contribution.toFixed(1)} pts
-                                        </p>
-                                      )}
-                                    </div>
-                                  );
-                                })}
+                              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 relative z-10">
+                                {Object.entries(cve.factor_breakdown).map(([key, data]) => (
+                                  <div key={key} className="bg-[#020617]/80 p-4 rounded-xl border border-slate-800/50 hover:border-slate-700/80 transition-colors">
+                                    <p className="text-[9px] text-slate-500 font-mono uppercase tracking-[0.2em] truncate mb-2">
+                                      {key.replace(/_/g, ' ')}
+                                    </p>
+                                    <p className="text-lg font-bold text-slate-200 font-mono">
+                                      {typeof data.raw_value === 'number' 
+                                        ? data.raw_value.toFixed(1) 
+                                        : data.raw_value}
+                                    </p>
+                                    <p className="text-[9px] text-cyan-500/70 font-mono mt-1">
+                                      +{data.contribution.toFixed(1)} pts
+                                    </p>
+                                  </div>
+                                ))}
                               </div>
+                              {cve.explanation?.dominant_factor_note && (
+                                <p className="mt-6 text-[11px] font-mono text-slate-500 italic border-t border-slate-800/50 pt-4">
+                                  {cve.explanation.dominant_factor_note}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -143,10 +151,7 @@ const CVETable = ({ cves }) => {
             ) : (
               <tr>
                 <td colSpan="4" className="p-20 text-center">
-                  <div className="inline-flex items-center justify-center p-4 bg-slate-900/50 rounded-full border border-slate-800 mb-4">
-                    <Crosshair size={32} className="text-slate-600" />
-                  </div>
-                  <p className="text-slate-500 font-mono text-[11px] tracking-[0.2em] uppercase">Zero Anomalies Detected</p>
+                  <p className="text-slate-500 font-mono text-[11px] tracking-[0.2em] uppercase">No Threats Identified</p>
                 </td>
               </tr>
             )}
