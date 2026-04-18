@@ -3,110 +3,200 @@
     "id": "CVE-001",
     "cvss": 9.1,
     "desc": "Remote code execution vulnerability",
-    "exploit": true
+    "exploit": true,
+    "publish_date": "2023-10-15",
+    "asset_criticality": "mission_critical",
+    "threat_intel": "apt_linked",
+    "patch_status": "no_patch"
   },
   {
     "id": "CVE-002",
     "cvss": 7.5,
     "desc": "SQL injection in login module",
-    "exploit": true
+    "exploit": true,
+    "publish_date": "2023-11-02",
+    "asset_criticality": "high",
+    "threat_intel": "active_campaign",
+    "patch_status": "vendor_advisory"
   },
   {
     "id": "CVE-003",
     "cvss": 5.4,
     "desc": "Cross-site scripting (XSS) issue",
-    "exploit": false
+    "exploit": false,
+    "publish_date": "2023-11-18",
+    "asset_criticality": "medium",
+    "threat_intel": "none",
+    "patch_status": "patch_available"
   },
   {
     "id": "CVE-004",
     "cvss": 8.2,
     "desc": "Privilege escalation vulnerability",
-    "exploit": true
+    "exploit": true,
+    "publish_date": "2023-12-05",
+    "asset_criticality": "high",
+    "threat_intel": "ransomware",
+    "patch_status": "patch_available"
   },
   {
     "id": "CVE-005",
     "cvss": 6.8,
     "desc": "Information disclosure flaw",
-    "exploit": false
+    "exploit": false,
+    "publish_date": "2024-01-12",
+    "asset_criticality": "low",
+    "threat_intel": "none",
+    "patch_status": "patched"
   },
   {
     "id": "CVE-006",
     "cvss": 9.8,
     "desc": "Buffer overflow in network service",
-    "exploit": true
+    "exploit": true,
+    "publish_date": "2024-01-22",
+    "asset_criticality": "mission_critical",
+    "threat_intel": "active_campaign",
+    "patch_status": "no_patch"
   },
   {
     "id": "CVE-007",
     "cvss": 4.3,
     "desc": "Denial of service vulnerability",
-    "exploit": false
+    "exploit": false,
+    "publish_date": "2024-02-08",
+    "asset_criticality": "medium",
+    "threat_intel": "none",
+    "patch_status": "patch_available"
   },
   {
     "id": "CVE-008",
     "cvss": 7.9,
     "desc": "Authentication bypass issue",
-    "exploit": true
+    "exploit": true,
+    "publish_date": "2024-02-14",
+    "asset_criticality": "mission_critical",
+    "threat_intel": "trending",
+    "patch_status": "patch_available"
   },
   {
     "id": "CVE-009",
     "cvss": 6.1,
     "desc": "Improper input validation",
-    "exploit": false
+    "exploit": false,
+    "publish_date": "2024-03-01",
+    "asset_criticality": "medium",
+    "threat_intel": "mentioned",
+    "patch_status": "vendor_advisory"
   },
   {
     "id": "CVE-010",
     "cvss": 8.7,
     "desc": "Insecure deserialization vulnerability",
-    "exploit": true
+    "exploit": true,
+    "publish_date": "2024-03-15",
+    "asset_criticality": "high",
+    "threat_intel": "apt_linked",
+    "patch_status": "vendor_advisory"
   },
-  
+  {
+    "id": "CVE-011",
+    "cvss": 9.4,
+    "desc": "OS Command Injection in management interface",
+    "exploit": true,
+    "publish_date": "2024-03-20",
+    "asset_criticality": "mission_critical",
+    "threat_intel": "ransomware",
+    "patch_status": "no_patch"
+  },
   {
     "id": "CVE-012",
     "cvss": 3.1,
     "desc": "Local path traversal in non-privileged log viewer",
-    "exploit": false
+    "exploit": false,
+    "publish_date": "2024-03-28",
+    "asset_criticality": "low",
+    "threat_intel": "none",
+    "patch_status": "patched"
   },
   {
     "id": "CVE-013",
     "cvss": 8.8,
     "desc": "Hardcoded administrative credentials in firmware v2.0",
-    "exploit": true
+    "exploit": true,
+    "publish_date": "2024-04-05",
+    "asset_criticality": "mission_critical",
+    "threat_intel": "ransomware",
+    "patch_status": "no_patch"
   },
   {
     "id": "CVE-014",
     "cvss": 5.9,
     "desc": "Null pointer dereference causing intermittent service crash",
-    "exploit": false
+    "exploit": false,
+    "publish_date": "2024-04-12",
+    "asset_criticality": "medium",
+    "threat_intel": "none",
+    "patch_status": "patch_available"
   },
   {
     "id": "CVE-015",
     "cvss": 7.2,
     "desc": "Insecure direct object reference (IDOR) in billing API",
-    "exploit": true
+    "exploit": true,
+    "publish_date": "2024-04-20",
+    "asset_criticality": "high",
+    "threat_intel": "trending",
+    "patch_status": "patch_available"
   },
-  
+  {
+    "id": "CVE-016",
+    "cvss": 7.1,
+    "desc": "XML External Entity (XXE) injection in file parser",
+    "exploit": false,
+    "publish_date": "2024-04-28",
+    "asset_criticality": "medium",
+    "threat_intel": "mentioned",
+    "patch_status": "patched"
+  },
   {
     "id": "CVE-017",
     "cvss": 6.5,
     "desc": "Server-side request forgery (SSRF) via PDF generator",
-    "exploit": true
+    "exploit": true,
+    "publish_date": "2024-05-02",
+    "asset_criticality": "medium",
+    "threat_intel": "active_campaign",
+    "patch_status": "vendor_advisory"
   },
   {
     "id": "CVE-018",
     "cvss": 4.7,
     "desc": "Weak password hashing algorithm (MD5) in legacy DB",
-    "exploit": false
+    "exploit": false,
+    "publish_date": "2024-05-10",
+    "asset_criticality": "low",
+    "threat_intel": "mentioned",
+    "patch_status": "patch_available"
   },
   {
     "id": "CVE-019",
     "cvss": 8.1,
     "desc": "Directory listing enabled on sensitive backup directory",
-    "exploit": true
+    "exploit": true,
+    "publish_date": "2024-05-15",
+    "asset_criticality": "high",
+    "threat_intel": "trending",
+    "patch_status": "no_patch"
   },
   {
     "id": "CVE-020",
     "cvss": 5.5,
     "desc": "Clickjacking vulnerability in user settings page",
-    "exploit": false
+    "exploit": false,
+    "publish_date": "2024-05-22",
+    "asset_criticality": "low",
+    "threat_intel": "none",
+    "patch_status": "patched"
   }
 ]

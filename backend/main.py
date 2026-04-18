@@ -1,6 +1,6 @@
 # backend/main.py
 
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 import json
@@ -53,15 +53,14 @@ def get_all_cves(
     limit: int                = Query(50, ge=1, le=200, description="Max results to return"),
 ):
     """
-    Returns all CVEs enriched with risk scores, priority labels, and explanations.
-    Supports optional filtering by severity and minimum risk score.
+    Returns all CVEs enriched with risk scores and priority labels.
+    (AI explanation removed for performance; fetch on demand via /api/explain-cve)
     """
     results = []
 
     for cve in CVE_DB:
         scored = score_cve(cve)                          # attach risk_score + priority
-        scored["explanation"] = generate_explanation(scored)
-
+        
         # Optional filters
         if min_score is not None and scored["risk_score"] < min_score:
             continue
@@ -87,7 +86,6 @@ def get_cve_by_id(cve_id: str):
     for cve in CVE_DB:
         if cve.get("id", "").upper() == cve_id.upper():
             scored = score_cve(cve)
-            scored["explanation"] = generate_explanation(scored)
             return scored
 
     # FIXED: Use FastAPI's HTTPException instead of returning a tuple
@@ -112,15 +110,12 @@ def get_summary():
         priority_counts[pri] = priority_counts.get(pri, 0) + 1
 
     top5 = sorted(all_scored, key=lambda x: x["risk_score"], reverse=True)[:5]
-    top5_with_explanation = [
-        {**cve, "explanation": generate_explanation(cve)} for cve in top5
-    ]
 
     return {
         "total_cves": len(all_scored),
         "severity_breakdown": severity_counts,
         "priority_breakdown": priority_counts,
-        "top_critical_threats": top5_with_explanation,
+        "top_critical_threats": top5,
     }
 
 
@@ -139,9 +134,29 @@ def search_cves(q: str = Query(..., description="Keyword to search in CVE descri
     results = []
     for cve in matches:
         scored = score_cve(cve)
-        scored["explanation"] = generate_explanation(scored)
         results.append(scored)
 
     results.sort(key=lambda x: x["risk_score"], reverse=True)
 
     return {"total": len(results), "cves": results}
+
+
+# ─── New On-Demand AI Endpoint ───────────────────────────────────────────────
+
+@app.post("/api/explain-cve", summary="Generate AI explanation on demand")
+async def explain_single_cve(request: Request):
+    """
+    Receives a single CVE object from the frontend and returns the AI explanation.
+    This prevents hitting rate limits by only calling Gemini when requested.
+    """
+    try:
+        # 1. Get the single CVE data from the React frontend
+        cve_data = await request.json()
+        
+        # 2. Pass it to your Gemini explainer
+        ai_result = generate_explanation(cve_data)
+        
+        # 3. Return just that one explanation
+        return ai_result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

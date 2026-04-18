@@ -5,7 +5,7 @@ Risk Scoring Engine for CVE Prioritization
 ==========================================
 Scoring is based on a weighted multi-factor model:
 
-  Factor                   Weight
+  Factor                  Weight
   ─────────────────────────────────
   CVSS Base Score           35%
   Exploit Availability      25%
@@ -95,7 +95,6 @@ def resolve_cvss(cve: dict) -> float:
     Extract CVSS score from CVE dict.
     Checks for both 'cvss' and 'cvss_score' to support different JSON formats.
     """
-    # ── FIXED: Added support for 'cvss' key ──
     raw = cve.get("cvss") if "cvss" in cve else cve.get("cvss_score")
     if raw is not None:
         try:
@@ -121,9 +120,9 @@ def resolve_factor(cve: dict, field: str, score_map: dict, default_key: str) -> 
 def compute_age_penalty(cve: dict) -> float:
     """
     Returns a small multiplicative penalty (0.85–1.0) for very old CVEs.
-    Only applies if published_date is available.
+    Only applies if published_date or publish_date is available.
     """
-    published = cve.get("published_date")
+    published = cve.get("published_date") or cve.get("publish_date")
     if not published:
         return 1.0  # No penalty if date unknown
 
@@ -181,7 +180,6 @@ def score_cve(cve: dict) -> dict:
     with risk_score (0–100), priority label, factor breakdown, and metadata.
     """
     
-    # ── FIXED: Pre-process dict to handle JSON mismatches safely ──
     cve_clean = cve.copy()
     
     # Normalize description field
@@ -196,7 +194,6 @@ def score_cve(cve: dict) -> dict:
     cvss_raw = resolve_cvss(cve_clean)
     if cve_clean.get("severity", "UNKNOWN").upper() == "UNKNOWN":
         cve_clean["severity"] = calculate_severity_from_cvss(cvss_raw)
-    # ──────────────────────────────────────────────────────────────
 
     # ── Step 1: Resolve raw factor scores (all 0.0–1.0) ──────────────────────
     cvss_norm   = normalize_cvss(cvss_raw)
@@ -216,7 +213,7 @@ def score_cve(cve: dict) -> dict:
 
     # ── Step 2: Weighted sum ──────────────────────────────────────────────────
     weighted_score = (
-        cvss_norm    * WEIGHTS["cvss"]        +
+        cvss_norm     * WEIGHTS["cvss"]       +
         exploit_score * WEIGHTS["exploit"]    +
         asset_score   * WEIGHTS["asset"]      +
         threat_score  * WEIGHTS["threat_intel"] +
@@ -230,10 +227,14 @@ def score_cve(cve: dict) -> dict:
     # ── Step 4: Scale to 0–100 and apply Severity Floors ─────────────────────
     final_score = round(min(adjusted_score * 100, 100.0), 2)
 
-    # SEVERITY FLOORS: Ensure severe CVSS scores aren't averaged down to Low
-    if cvss_raw >= 9.0 and final_score < 70:
-        final_score = 75.0  # Force CVSS 9.0+ to stay at least HIGH
-    elif cvss_raw >= 7.0 and final_score < 40:
+    # UPDATED: SEVERITY FLOORS logic
+    if cvss_raw >= 9.0:
+        # If it's a 9.0+ AND has an exploit, it must be CRITICAL regardless of missing data
+        if exploit_score >= 0.75 and final_score < 85.0:
+            final_score = 85.0  
+        elif final_score < 75.0:
+            final_score = 75.0  # Force CVSS 9.0+ without exploit to stay at least HIGH
+    elif cvss_raw >= 7.0 and final_score < 45.0:
         final_score = 45.0  # Force CVSS 7.0+ to stay at least MEDIUM
 
     # ── Step 5: Derive labels and metadata ───────────────────────────────────
@@ -277,21 +278,14 @@ def score_cve(cve: dict) -> dict:
 
     # ── Step 7: Return enriched CVE dict ─────────────────────────────────────
     return {
-        # Original fields preserved (including your 'desc' and boolean 'exploit' for the UI)
         **cve_clean,
-
-        # Computed fields
         "risk_score":           final_score,
         "priority":             priority,
         "priority_color":       color,
         "remediation_urgency":  remediation_urgency,
         "age_penalty_applied":  round(age_penalty, 4),
         "severity":             cve_clean.get("severity", "UNKNOWN").upper(),
-
-        # Factor breakdown (powers the explanation + dashboard charts)
         "factor_breakdown":     factor_breakdown,
-
-        # Convenience: dominant factor (highest contribution)
         "dominant_factor":      max(
             factor_breakdown,
             key=lambda k: factor_breakdown[k]["contribution"]

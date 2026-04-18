@@ -1,6 +1,162 @@
 import React, { useState } from 'react';
 import { Crosshair, Zap, Cpu, CheckCircle2, ChevronRight, Binary } from 'lucide-react';
 
+// ─── Individual Row Component ──────────────────────────────────────────────
+// Extracting the row into its own component allows each CVE to independently 
+// manage its own AI fetching state and data.
+const CVERow = ({ cve, isExpanded, toggleRow, style }) => {
+  // If the backend already sent an explanation (legacy), use it. Otherwise, null.
+  const [aiData, setAiData] = useState(cve.explanation || null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateAI = async (e) => {
+    e.stopPropagation(); // Prevents the row from expanding/collapsing when clicking the button
+    setIsGenerating(true);
+    
+    try {
+      const response = await fetch('http://localhost:8000/api/explain-cve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cve),
+      });
+      
+      const data = await response.json();
+      setAiData(data);
+    } catch (error) {
+      console.error("Failed to fetch AI explanation:", error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <React.Fragment>
+      <tr 
+        onClick={() => toggleRow(cve.id)}
+        className={`hover:bg-slate-800/30 transition-all duration-300 cursor-pointer group align-top ${isExpanded ? 'bg-slate-800/20' : ''}`}
+      >
+        <td className="p-5 text-slate-600 group-hover:text-cyan-400 transition-colors align-middle">
+          <ChevronRight size={20} className={`transform transition-transform duration-300 ${isExpanded ? 'rotate-90 text-cyan-400' : ''}`} />
+        </td>
+        <td className="p-5">
+          <div className="flex flex-col gap-2.5">
+            <span className="font-mono font-bold text-slate-200 text-sm tracking-wide">{cve.id}</span>
+            
+            {cve.description && (
+              <p className="text-[11px] text-slate-400 leading-relaxed italic max-w-sm line-clamp-2 group-hover:text-slate-300 transition-colors">
+                {cve.description}
+              </p>
+            )}
+
+            {cve.dominant_factor && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-mono font-bold bg-[#020617] text-slate-400 border border-slate-700/80 tracking-widest uppercase w-fit group-hover:border-slate-600">
+                <Zap size={10} className="text-amber-400" /> {cve.dominant_factor.replace(/_/g, ' ')}
+              </span>
+            )}
+          </div>
+        </td>
+        <td className="p-5 text-center">
+          <div className="flex flex-col items-center gap-2">
+            <span className={`text-2xl font-black font-sans tracking-tighter ${style.color}`}>
+              {cve.risk_score?.toFixed(1) || 'N/A'}
+            </span>
+            <span className={`px-3 py-1 rounded-full text-[9px] font-mono font-bold uppercase tracking-widest border ${style.bg} ${style.border} ${style.color} ${style.glow}`}>
+              {cve.priority || 'UNKNOWN'}
+            </span>
+          </div>
+        </td>
+        <td className="p-5">
+          <div className="flex flex-col gap-4">
+            
+            {/* AI On-Demand Button OR AI Data Display */}
+            {!aiData ? (
+              <button
+                onClick={handleGenerateAI}
+                disabled={isGenerating}
+                className={`flex items-center gap-2 w-fit px-4 py-2 rounded-lg border text-[10px] font-mono font-bold tracking-[0.15em] uppercase transition-all duration-300 ${
+                  isGenerating 
+                    ? 'bg-slate-800/50 border-slate-700 text-slate-500 cursor-wait'
+                    : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.2)]'
+                }`}
+              >
+                <Cpu size={14} className={isGenerating ? "animate-pulse text-slate-500" : "text-cyan-400"} />
+                {isGenerating ? "Analyzing Signature..." : "Initialize AI"}
+              </button>
+            ) : (
+              <>
+                {/* AI Summary */}
+                <div className="flex items-start gap-3 bg-[#020617]/40 p-3 rounded-xl border border-slate-800/40">
+                  <Cpu size={16} className="text-cyan-500 mt-0.5 shrink-0" />
+                  <span className="text-sm text-slate-300 font-medium leading-relaxed">
+                    {aiData.summary}
+                  </span>
+                </div>
+
+                {/* Recommended Actions */}
+                {aiData.recommended_actions?.length > 0 && (
+                  <div className="ml-7 pl-3 border-l-2 border-slate-700/50">
+                    <ul className="space-y-2">
+                      {aiData.recommended_actions.map((action, i) => (
+                        <li key={i} className="text-[13px] text-slate-400 flex items-start gap-2.5 font-mono">
+                          <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                          {action}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            )}
+
+          </div>
+        </td>
+      </tr>
+      
+      {/* Telemetry Drawer */}
+      {isExpanded && cve.factor_breakdown && (
+        <tr className="bg-[#020617] border-b border-slate-800/80">
+          <td colSpan="4" className="p-0">
+            <div className="px-16 py-8">
+              <div className="bg-[#0f172a]/60 border border-slate-800/80 p-6 rounded-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 blur-[100px] rounded-full"></div>
+                <h4 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                  <Crosshair size={14} className="text-slate-400" /> Granular Factor Analysis
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 relative z-10">
+                  {Object.entries(cve.factor_breakdown).map(([key, data]) => (
+                    <div key={key} className="bg-[#020617]/80 p-4 rounded-xl border border-slate-800/50 hover:border-slate-700/80 transition-colors">
+                      <p className="text-[9px] text-slate-500 font-mono uppercase tracking-[0.2em] truncate mb-2">
+                        {key.replace(/_/g, ' ')}
+                      </p>
+                      <p className="text-lg font-bold text-slate-200 font-mono">
+                        {typeof data.raw_value === 'number' 
+                          ? data.raw_value.toFixed(1) 
+                          : data.raw_value}
+                      </p>
+                      <p className="text-[9px] text-cyan-500/70 font-mono mt-1">
+                        +{data.contribution.toFixed(1)} pts
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                {/* Updated to pull the note from the dynamically fetched AI data */}
+                {aiData?.dominant_factor_note && (
+                  <p className="mt-6 text-[11px] font-mono text-slate-500 italic border-t border-slate-800/50 pt-4">
+                    {aiData.dominant_factor_note}
+                  </p>
+                )}
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+    </React.Fragment>
+  );
+};
+
+// ─── Main Table Component ──────────────────────────────────────────────────
 const CVETable = ({ cves }) => {
   const [expandedId, setExpandedId] = useState(null);
 
@@ -40,114 +196,15 @@ const CVETable = ({ cves }) => {
           </thead>
           <tbody className="divide-y divide-slate-800/50">
             {cves.length > 0 ? (
-              cves.map((cve) => {
-                const style = getStyleForPriority(cve.priority);
-                const isExpanded = expandedId === cve.id;
-
-                return (
-                  <React.Fragment key={cve.id}>
-                    <tr 
-                      onClick={() => toggleRow(cve.id)}
-                      className={`hover:bg-slate-800/30 transition-all duration-300 cursor-pointer group align-top ${isExpanded ? 'bg-slate-800/20' : ''}`}
-                    >
-                      <td className="p-5 text-slate-600 group-hover:text-cyan-400 transition-colors align-middle">
-                        <ChevronRight size={20} className={`transform transition-transform duration-300 ${isExpanded ? 'rotate-90 text-cyan-400' : ''}`} />
-                      </td>
-                      <td className="p-5">
-                        <div className="flex flex-col gap-2.5">
-                          <span className="font-mono font-bold text-slate-200 text-sm tracking-wide">{cve.id}</span>
-                          
-                          {/* Description mapped from backend payload */}
-                          {cve.description && (
-                            <p className="text-[11px] text-slate-400 leading-relaxed italic max-w-sm line-clamp-2 group-hover:text-slate-300 transition-colors">
-                              {cve.description}
-                            </p>
-                          )}
-
-                          {cve.dominant_factor && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-mono font-bold bg-[#020617] text-slate-400 border border-slate-700/80 tracking-widest uppercase w-fit group-hover:border-slate-600">
-                              <Zap size={10} className="text-amber-400" /> {cve.dominant_factor.replace(/_/g, ' ')}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-5 text-center">
-                        <div className="flex flex-col items-center gap-2">
-                          <span className={`text-2xl font-black font-sans tracking-tighter ${style.color}`}>
-                            {cve.risk_score?.toFixed(1) || 'N/A'}
-                          </span>
-                          <span className={`px-3 py-1 rounded-full text-[9px] font-mono font-bold uppercase tracking-widest border ${style.bg} ${style.border} ${style.color} ${style.glow}`}>
-                            {cve.priority || 'UNKNOWN'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-5">
-                        <div className="flex flex-col gap-4">
-                          {/* AI Summary */}
-                          <div className="flex items-start gap-3 bg-[#020617]/40 p-3 rounded-xl border border-slate-800/40">
-                            <Cpu size={16} className="text-cyan-500 mt-0.5 shrink-0" />
-                            <span className="text-sm text-slate-300 font-medium leading-relaxed">
-                              {cve.explanation?.summary || "Analyzing vulnerability signature..."}
-                            </span>
-                          </div>
-
-                          {/* Recommended Actions */}
-                          {cve.explanation?.recommended_actions?.length > 0 && (
-                            <div className="ml-7 pl-3 border-l-2 border-slate-700/50">
-                              <ul className="space-y-2">
-                                {cve.explanation.recommended_actions.map((action, i) => (
-                                  <li key={i} className="text-[13px] text-slate-400 flex items-start gap-2.5 font-mono">
-                                    <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0" />
-                                    {action}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                    
-                    {/* Telemetry Drawer */}
-                    {isExpanded && cve.factor_breakdown && (
-                      <tr className="bg-[#020617] border-b border-slate-800/80">
-                        <td colSpan="4" className="p-0">
-                          <div className="px-16 py-8">
-                            <div className="bg-[#0f172a]/60 border border-slate-800/80 p-6 rounded-2xl relative overflow-hidden">
-                              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 blur-[100px] rounded-full"></div>
-                              <h4 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                                <Crosshair size={14} className="text-slate-400" /> Granular Factor Analysis
-                              </h4>
-                              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 relative z-10">
-                                {Object.entries(cve.factor_breakdown).map(([key, data]) => (
-                                  <div key={key} className="bg-[#020617]/80 p-4 rounded-xl border border-slate-800/50 hover:border-slate-700/80 transition-colors">
-                                    <p className="text-[9px] text-slate-500 font-mono uppercase tracking-[0.2em] truncate mb-2">
-                                      {key.replace(/_/g, ' ')}
-                                    </p>
-                                    <p className="text-lg font-bold text-slate-200 font-mono">
-                                      {typeof data.raw_value === 'number' 
-                                        ? data.raw_value.toFixed(1) 
-                                        : data.raw_value}
-                                    </p>
-                                    <p className="text-[9px] text-cyan-500/70 font-mono mt-1">
-                                      +{data.contribution.toFixed(1)} pts
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                              {cve.explanation?.dominant_factor_note && (
-                                <p className="mt-6 text-[11px] font-mono text-slate-500 italic border-t border-slate-800/50 pt-4">
-                                  {cve.explanation.dominant_factor_note}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })
+              cves.map((cve) => (
+                <CVERow 
+                  key={cve.id} 
+                  cve={cve} 
+                  isExpanded={expandedId === cve.id} 
+                  toggleRow={toggleRow} 
+                  style={getStyleForPriority(cve.priority)} 
+                />
+              ))
             ) : (
               <tr>
                 <td colSpan="4" className="p-20 text-center">
