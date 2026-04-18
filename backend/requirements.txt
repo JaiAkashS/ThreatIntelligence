@@ -1,0 +1,84 @@
+# backend/requirements.txt
+# AI-Powered Threat Intelligence & CVE Prioritization
+# Install with: pip install -r requirements.txt
+
+# ─── Web Framework ────────────────────────────────────────────────────────────
+fastapi==0.111.0
+uvicorn[standard]==0.29.0          # ASGI server with websocket + reload support
+python-multipart==0.0.9            # Required for form data / file uploads
+
+# ─── Data Validation & Serialization ─────────────────────────────────────────
+pydantic==2.7.1                    # Data models & request/response validation
+pydantic-settings==2.2.1           # Settings management via env vars
+
+# ─── HTTP Client (for fetching live CVE feeds) ────────────────────────────────
+httpx==0.27.0                      # Async HTTP client (used in CVE feed fetcher)
+aiohttp==3.9.5                     # Alternative async HTTP (optional, for NVD API)
+requests==2.31.0                   # Sync HTTP fallback
+
+# ─── Data Processing ──────────────────────────────────────────────────────────
+pandas==2.2.2                      # CVE dataset manipulation & filtering
+numpy==1.26.4                      # Numerical operations for scoring
+python-dateutil==2.9.0             # Robust date parsing for CVE published dates
+
+# ─── JSON & Data Handling ─────────────────────────────────────────────────────
+orjson==3.10.3                     # Fast JSON serialization (FastAPI compatible)
+ujson==5.10.0                      # Ultra-fast JSON parsing for large CVE feeds
+
+# ─── NLP / Text Analysis (optional — for description-based scoring) ───────────
+transformers==4.41.1               # Hugging Face transformer models
+torch==2.3.0                       # PyTorch backend for HuggingFace models
+sentence-transformers==3.0.0       # Semantic similarity for CVE descriptions
+scikit-learn==1.5.0                # TF-IDF, cosine similarity, ML utilities
+nltk==3.8.1                        # Tokenization & text preprocessing
+
+# ─── CVE / Security Data Sources ─────────────────────────────────────────────
+nvdlib==0.7.6                      # NVD (National Vulnerability Database) API wrapper
+cvedb==0.1.0                       # Lightweight CVE database access
+
+# ─── Caching ──────────────────────────────────────────────────────────────────
+cachetools==5.3.3                  # In-memory TTL cache for CVE feed responses
+redis==5.0.4                       # Optional Redis cache backend
+aioredis==2.0.1                    # Async Redis client
+
+# ─── Background Tasks & Scheduling ───────────────────────────────────────────
+apscheduler==3.10.4                # Scheduled CVE feed refresh jobs
+celery==5.4.0                      # Optional task queue for heavy processing
+
+# ─── Database (optional — for persisting scored CVEs) ────────────────────────
+sqlalchemy==2.0.30                 # ORM for storing CVE scores & history
+alembic==1.13.1                    # DB migrations
+databases==0.9.0                   # Async DB queries
+aiosqlite==0.20.0                  # SQLite async driver (dev/local use)
+asyncpg==0.29.0                    # PostgreSQL async driver (production)
+
+# ─── Environment & Configuration ─────────────────────────────────────────────
+python-dotenv==1.0.1               # Load .env files
+dynaconf==3.2.5                    # Advanced config management
+
+# ─── Logging & Monitoring ─────────────────────────────────────────────────────
+loguru==0.7.2                      # Structured logging with rotation
+rich==13.7.1                       # Pretty console output for dev
+sentry-sdk[fastapi]==2.3.1         # Error tracking (optional for production)
+
+# ─── Security & Auth (optional — for protecting the API) ─────────────────────
+python-jose[cryptography]==3.3.0   # JWT token handling
+passlib[bcrypt]==1.7.4             # Password hashing
+fastapi-limiter==0.1.6             # Rate limiting for API endpoints
+
+# ─── CORS & Middleware ────────────────────────────────────────────────────────
+starlette==0.37.2                  # ASGI toolkit (FastAPI dependency)
+
+# ─── Testing ──────────────────────────────────────────────────────────────────
+pytest==8.2.0                      # Test runner
+pytest-asyncio==0.23.6             # Async test support
+httpx==0.27.0                      # Test client for FastAPI (already listed above)
+pytest-cov==5.0.0                  # Test coverage reporting
+faker==25.2.0                      # Generate fake CVE data for tests
+
+# ─── Dev Tools ────────────────────────────────────────────────────────────────
+black==24.4.2                      # Code formatter
+isort==5.13.2                      # Import sorter
+flake8==7.0.0                      # Linter
+mypy==1.10.0                       # Static type checker
+pre-commit==3.7.1                  # Git hooks for code quality
