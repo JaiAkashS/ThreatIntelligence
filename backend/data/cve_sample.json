@@ -1,0 +1,62 @@
+[
+  {
+    "id": "CVE-001",
+    "cvss": 9.1,
+    "desc": "Remote code execution vulnerability",
+    "exploit": true
+  },
+  {
+    "id": "CVE-002",
+    "cvss": 7.5,
+    "desc": "SQL injection in login module",
+    "exploit": true
+  },
+  {
+    "id": "CVE-003",
+    "cvss": 5.4,
+    "desc": "Cross-site scripting (XSS) issue",
+    "exploit": false
+  },
+  {
+    "id": "CVE-004",
+    "cvss": 8.2,
+    "desc": "Privilege escalation vulnerability",
+    "exploit": true
+  },
+  {
+    "id": "CVE-005",
+    "cvss": 6.8,
+    "desc": "Information disclosure flaw",
+    "exploit": false
+  },
+  {
+    "id": "CVE-006",
+    "cvss": 9.8,
+    "desc": "Buffer overflow in network service",
+    "exploit": true
+  },
+  {
+    "id": "CVE-007",
+    "cvss": 4.3,
+    "desc": "Denial of service vulnerability",
+    "exploit": false
+  },
+  {
+    "id": "CVE-008",
+    "cvss": 7.9,
+    "desc": "Authentication bypass issue",
+    "exploit": true
+  },
+  {
+    "id": "CVE-009",
+    "cvss": 6.1,
+    "desc": "Improper input validation",
+    "exploit": false
+  },
+  {
+    "id": "CVE-010",
+    "cvss": 8.7,
+    "desc": "Insecure deserialization vulnerability",
+    "exploit": true
+  }
+]
