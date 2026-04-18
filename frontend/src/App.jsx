@@ -10,21 +10,27 @@ const App = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState(null);
 
-  const mockData = [
-    { id: "CVE-2023-44487", description: "HTTP/2 protocol allows a denial of service (server resource consumption).", score: 7.5, explanation: "High potential for DoS attacks; prioritize patching perimeter proxies." },
-    { id: "CVE-2021-44228", description: "Apache Log4j2 JNDI features do not protect against attacker controlled LDAP.", score: 10.0, explanation: "Log4Shell: Critical RCE. Immediate mitigation required." },
-    { id: "CVE-2024-21626", description: "runc container breakout vulnerability allowing environment escape.", score: 8.6, explanation: "High risk for containerized environments. Update runc immediately." },
-    { id: "CVE-2020-1472", description: "Elevation of privilege via vulnerable Netlogon secure channel connection.", score: 10.0, explanation: "Zerologon: Critical risk to Active Directory infrastructure." },
-    { id: "CVE-2023-38545", description: "SOCKS5 heap buffer overflow in curl and libcurl.", score: 5.3, explanation: "Medium risk. Update curl if SOCKS5 proxies are utilized." },
-    { id: "CVE-2023-12345", description: "Minor information disclosure in legacy admin panel.", score: 3.2, explanation: "Low risk. Patch during the next standard maintenance window." }
-  ];
-
   useEffect(() => {
-    // Simulating API fetch
-    setTimeout(() => {
-      setCves(mockData);
-      setLoading(false);
-    }, 600);
+    const fetchCVEs = async () => {
+      try {
+        setLoading(true);
+        // Point this to your actual backend URL
+        const response = await fetch('http://localhost:8000/cves');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setCves(data);
+      } catch (error) {
+        console.error("Backend connection failed. Check CORS and server status.", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCVEs();
   }, []);
 
   const getSeverityLabel = (score) => {
@@ -34,10 +40,10 @@ const App = () => {
     return 'LOW';
   };
 
-  // Compute total stats (unfiltered) for the cards and chart
+  // Compute total stats (unfiltered) using the new 'cvss' key
   const stats = useMemo(() => {
     return cves.reduce((acc, cve) => {
-      const sev = getSeverityLabel(cve.score);
+      const sev = getSeverityLabel(cve.cvss);
       if (sev === 'CRITICAL') acc.critical += 1;
       else if (sev === 'HIGH') acc.high += 1;
       else if (sev === 'MEDIUM') acc.medium += 1;
@@ -46,12 +52,12 @@ const App = () => {
     }, { critical: 0, high: 0, medium: 0, low: 0 });
   }, [cves]);
 
-  // Apply search text and active category filters
+  // Apply search text and active category filters using 'desc' and 'cvss'
   const filteredCVEs = useMemo(() => {
     return cves.filter(cve => {
       const matchesSearch = cve.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            cve.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesFilter = activeFilter ? getSeverityLabel(cve.score) === activeFilter : true;
+                            cve.desc.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesFilter = activeFilter ? getSeverityLabel(cve.cvss) === activeFilter : true;
       return matchesSearch && matchesFilter;
     });
   }, [cves, searchTerm, activeFilter]);
@@ -60,7 +66,7 @@ const App = () => {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-slate-50">
         <Activity className="animate-pulse text-indigo-600 mb-4" size={48} />
-        <p className="text-slate-600 font-medium animate-pulse">Initializing Threat Matrix...</p>
+        <p className="text-slate-600 font-medium animate-pulse">Fetching Threat Data...</p>
       </div>
     );
   }
@@ -93,7 +99,7 @@ const App = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
             <input 
               type="text" 
-              placeholder="Search vulnerabilities..." 
+              placeholder="Search ID or description..." 
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -109,14 +115,10 @@ const App = () => {
           )}
         </div>
 
-        {/* Dashboard Grid (Cards + Chart) */}
+        {/* Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <StatsCards 
-              stats={stats} 
-              activeFilter={activeFilter} 
-              onFilterChange={setActiveFilter} 
-            />
+            <StatsCards stats={stats} activeFilter={activeFilter} onFilterChange={setActiveFilter} />
           </div>
           <div className="lg:col-span-1">
             <RiskChart stats={stats} />
