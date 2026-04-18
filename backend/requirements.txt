@@ -17,7 +17,7 @@ aiohttp==3.9.5                     # Alternative async HTTP (optional, for NVD A
 requests==2.31.0                   # Sync HTTP fallback
 
 # ─── Data Processing ──────────────────────────────────────────────────────────
-pandas==2.2.2                      # CVE dataset manipulation & filtering
+                  # CVE dataset manipulation & filtering
 numpy==1.26.4                      # Numerical operations for scoring
 python-dateutil==2.9.0             # Robust date parsing for CVE published dates
 
