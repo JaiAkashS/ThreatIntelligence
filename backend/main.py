@@ -1,5 +1,5 @@
 # backend/main.py
-
+import uvicorn
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
@@ -163,3 +163,12 @@ async def explain_single_cve(request: Request):
         return ai_result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+if __name__ == "__main__":
+    # Get the port from Render's environment, or default to 8000 for local dev
+    port = int(os.environ.get("PORT", 8000))
+    
+    print(f"Starting server on port {port}...")
+    
+    # Run the server
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)

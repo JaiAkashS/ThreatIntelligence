@@ -60,7 +60,8 @@ const App = () => {
     const fetchCVEs = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:8000/cves");
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+        const response = await fetch(`${baseUrl}/cves`);
         if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
         console.log("BACKEND DATA:", data.cves);
