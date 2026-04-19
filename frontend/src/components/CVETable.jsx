@@ -9,18 +9,24 @@ const CVERow = ({ cve, isExpanded, toggleRow, style }) => {
   const [aiData, setAiData] = useState(cve.explanation || null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleGenerateAI = async (e) => {
+const handleGenerateAI = async (e) => {
     e.stopPropagation(); // Prevents the row from expanding/collapsing when clicking the button
     setIsGenerating(true);
     
     try {
-      const response = await fetch('http://localhost:8000/api/explain-cve', {
+      // ✅ Use the environment variable, falling back to localhost for local dev
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const response = await fetch(`${baseUrl}/api/explain-cve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(cve),
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
       const data = await response.json();
       setAiData(data);
